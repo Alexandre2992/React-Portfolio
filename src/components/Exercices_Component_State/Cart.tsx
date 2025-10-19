@@ -1,0 +1,23 @@
+import React from "react";
+
+interface Props {
+  cartItems: string[];
+  onClear: () => void;
+}
+const Cart = ({ cartItems, onClear }: Props) => {
+  return (
+    <>
+      <div>Cart</div>
+      <ul>
+        {cartItems.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+      <button className="btn btn-primary" type="button" onClick={onClear}>
+        Clear Items
+      </button>
+    </>
+  );
+};
+
+export default Cart;
