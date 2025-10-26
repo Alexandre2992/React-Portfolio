@@ -1,0 +1,28 @@
+Key Parts Explained
+1.** const controller = new AbortController();**
+Creates an AbortController instance, a built-in JavaScript class for canceling async operations like API requests.
+The controller has a signal property used to signal cancellation.
+
+2.signal: controller.signalPasses the controller.signal to axios.get as a config option.
+This tells axios to monitor the signal. If controller.abort() is called, the request is canceled, and the Promise rejects with a CanceledError.
+
+3.if (error instanceof CanceledError) return;In the .catch() callback, this checks if the error is a CanceledError (thrown when the request is aborted).
+If it is, return stops further execution, so setError isn’t called. This prevents setting an error message for intentional cancellations (e.g., when the component unmounts).
+
+4.return () => controller.abort();This is the cleanup function returned by useEffect.
+It runs when the component unmounts (or if useEffect re-runs, which it doesn’t here due to []).
+controller.abort() cancels the axios request by triggering the signal, causing a CanceledError.
+
+Why Cleanup?
+-Problem: If the component unmounts (e.g., user navigates away) while the axios request is still running, the .then() or .catch() might try to update state (setUsers or setError), causing a warning like “Can’t perform a React state update on an unmounted component.”
+-Solution: The cleanup function (controller.abort()) cancels the request before unmounting, so .then() or .catch() won’t run if the request was aborted.
+-The CanceledError check: Ensures that if the request was canceled (intentionally), you don’t treat it as a real error and set an error message.
+
+How It Works Together
+-When useEffect runs, it starts the axios request with controller.signal.
+-If the component unmounts, the cleanup function (() => controller.abort()) runs, canceling the request.
+-If the request is canceled, axios throws a CanceledError, caught by .catch().
+-The if (error instanceof CanceledError) return; check ignores the cancellation error, preventing setError from updating the state unnecessarily.
+
+
+
