@@ -11,19 +11,24 @@ interface User {
 function App() {
   const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState("");
-
+  const [isLoading, setLoading] = useState(false);
   //we will use the Effect hook to call the server!
   useEffect(() => {
     const controller = new AbortController(); //object controller is setted to an instance AbortController, a built in class that allows us to cancel/abort async operations such as fetch requests,DOM manipulations...
 
+    setLoading(true);
     axios
       .get<User[]>("https://jsonplaceholder.typicode.com/users", {
         signal: controller.signal,
       }) //This method returns a Promise->An object that holds the eventual result or failure of an asynchronous operation. asynchronous is just an operation that might take a long time
-      .then((response) => setUsers(response.data)) //then is a method, and we can pass a calback function that will be executed when the promise is resolved and the result is ready, we get a response object and pass that to the function (response)=>...
+      .then((response) => {
+        setUsers(response.data); //then is a method, and we can pass a calback function that will be executed when the promise is resolved and the result is ready, we get a response object and pass that to the function (response)=>...
+        setLoading(false);
+      })
       .catch((error) => {
         if (error instanceof CanceledError) return;
         setError(error.message);
+        setLoading(false);
       }); //In JS all promisses have a method catch, to chatch errors
 
     return () => controller.abort(); //returning our clean up function(see EffectCleanUp script demo)
@@ -32,6 +37,7 @@ function App() {
   return (
     <>
       {error && <p className="text-danger">{error}</p>}
+      {isLoading && <div className="spinner-border"></div>}
       <ul>
         {users.map((item) => (
           <li key={item.id}>{item.name}</li>
